@@ -1,0 +1,116 @@
+[gd_scene load_steps=5 format=3 uid="uid://eb45g6exg3qh"]
+
+[ext_resource type="Texture2D" uid="uid://djy8ppnshq75b" path="res://icon.svg" id="1_rc4rb"]
+
+[sub_resource type="GDScript" id="GDScript_vsbh0"]
+script/source = "extends CharacterBody2D
+
+const SPEED = 350.0
+const JUMP_VELOCITY = -500.0
+enum States {Ground, Jumping, Falling, On_Wall}
+var nojumps = false
+var _state : int = States.Ground
+var gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
+
+func jump():
+	velocity.y = JUMP_VELOCITY
+
+func handle_wall_jump():
+	if _state != 3: return
+	var wall_normal = get_wall_normal()
+	if Input.is_action_just_pressed(\"left\") and wall_normal == Vector2.LEFT:
+		velocity.x = wall_normal.x * SPEED
+		velocity.y = JUMP_VELOCITY 
+	if Input.is_action_just_pressed(\"right\") and wall_normal == Vector2.RIGHT:
+		velocity.x = wall_normal.x * SPEED
+		velocity.y = JUMP_VELOCITY 
+	if Input.is_action_just_pressed(\"up\"): return
+
+func _physics_process(delta):
+	handle_wall_jump()
+	# Add the gravity.
+	if not is_on_floor():
+		velocity.y += gravity * delta
+
+	if is_on_floor():
+		_state = 0
+		nojumps = false
+	if velocity.y > 0:
+		_state = 2
+
+	if !is_on_floor() and is_on_wall():
+		if Input.is_action_pressed(\"left\") or Input.is_action_pressed(\"right\"): 
+			_state = 3
+
+	if _state == 3:
+		if velocity.y > 0:
+			gravity = 100
+		else:
+			gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
+
+	# Handle Jump.
+	if Input.is_action_just_pressed(\"up\") and is_on_floor():
+		jump()
+		_state = States.Jumping
+	if Input.is_action_just_pressed(\"up\") and !is_on_floor() and nojumps == false:
+		jump()
+		nojumps = true
+		print(\"dbljump\")
+
+	# Get the input direction and handle the movement/deceleration.
+	# As good practice, you should replace UI actions with custom gameplay actions.
+	var direction = Input.get_axis(\"left\", \"right\")
+	if direction:
+		velocity.x = direction * SPEED
+	else:
+		velocity.x = move_toward(velocity.x, 0, SPEED)
+
+	move_and_slide()
+"
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_g1m73"]
+radius = 29.0
+height = 92.0
+
+[sub_resource type="GDScript" id="GDScript_bmjrg"]
+script/source = "extends Label
+@onready var player = get_parent()
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(_delta):
+	if player._state == 0:
+		text = (\"grounded\")
+	if player._state == 1:
+		text = (\"jumping\")
+	if player._state == 2:
+		text = (\"falling\")
+	if player._state == 3:
+		text = (\"wall\")
+
+
+"
+
+[node name="Player" type="CharacterBody2D"]
+position = Vector2(505, 299)
+script = SubResource("GDScript_vsbh0")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.476563, 0.654297)
+texture = ExtResource("1_rc4rb")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_g1m73")
+
+[node name="Label" type="Label" parent="."]
+offset_left = -20.0
+offset_top = -73.0
+offset_right = 20.0
+offset_bottom = -50.0
+horizontal_alignment = 1
+vertical_alignment = 1
+script = SubResource("GDScript_bmjrg")
