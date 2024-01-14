@@ -33,7 +33,6 @@ var attacking = false
 @onready var Standingcshape = $PlayerCol
 @onready var Crouchingcshape = $CrouchCol
 @onready var hitbox = $HitArea
-@onready var wallcheckjump = $WallcheckJump
 
 signal paused
 
@@ -73,6 +72,7 @@ func handle_wall_jump():
 	var wall_normal = get_wall_normal()
 	#handle wall jump
 	if Input.is_action_just_pressed(\"up\") and wall_normal == Vector2.LEFT and state != States.Walljumping: #and !Input.is_action_pressed(\"right\"):
+		print(\"walljump\")
 		state = States.Walljumping
 		walljumpbegin = true
 		velocity.x = 0
@@ -82,6 +82,7 @@ func handle_wall_jump():
 			lookinleft = true
 			scale.x = -1.0
 	if Input.is_action_just_pressed(\"up\") and wall_normal == Vector2.RIGHT and state != States.Walljumping: #and !Input.is_action_pressed(\"left\"):
+		print(\"walljump\")
 		state = States.Walljumping
 		walljumpbegin = true
 		velocity.x = 0
@@ -92,13 +93,10 @@ func handle_wall_jump():
 			scale.x = -1.0
 func handle_attack():
 	if Input.is_action_just_pressed(\"attack\"):
-		print(\"blammo!\")
 		if attacking == false:
 			$AttackTimer.start()
 			hitbox.monitoring = true
 			attacking = true
-			print(\"boosh\")
-
 func _on_killzone_body_entered(_body):
 	print(\"dead\")
 	die()
@@ -131,9 +129,8 @@ func _physics_process(delta):
 		#if velocity.x < 0:
 				#Input.action_press(\"left\")
 		if is_on_wall():
-			if wallcheckjump.is_colliding and !Input.is_action_just_pressed(\"up\"):
+			if !Input.is_action_just_pressed(\"up\"):
 				state = States.On_Wall
-				print(\"hoho!\")
 
 	Crouchingcshape.disabled = true
 	Standingcshape.disabled = false
@@ -180,10 +177,10 @@ func _physics_process(delta):
 #Wallhang code
 	if !is_on_floor() and is_on_wall():
 		var wall_normal = get_wall_normal()
-		if wall_normal == Vector2.RIGHT and !Input.is_action_just_pressed(\"up\") and Input.is_action_pressed(\"left\"): #or velocity.x < 0:
+		if wall_normal == Vector2.RIGHT and !Input.is_action_just_pressed(\"up\") and Input.is_action_pressed(\"left\") and ($Wallcheck.is_colliding() or $Wallcheck2.is_colliding()): #or velocity.x < 0:
 			state = States.On_Wall
 			velocity.y *= .85
-		if wall_normal == Vector2.LEFT and !Input.is_action_just_pressed(\"up\") and Input.is_action_pressed(\"right\"): #or velocity.x > 0:
+		if wall_normal == Vector2.LEFT and !Input.is_action_just_pressed(\"up\") and Input.is_action_pressed(\"right\") and ($Wallcheck.is_colliding() or $Wallcheck2.is_colliding()): #or velocity.x > 0:
 			state = States.On_Wall
 			velocity.y *= .85
 
@@ -191,7 +188,6 @@ func _physics_process(delta):
 		$CoyoteTimer.start()
 		coyote = true
 		coyotestarted = true
-		print(\"coyotestart\")
 #Crouch code
 	if state == States.Ground:
 		anim.play(\"idle\")
@@ -207,7 +203,6 @@ func _physics_process(delta):
 			if sliding == false:
 				$SlideTimer.start()
 				sliding = true
-				print(\"slidestart\")
 #More slide code
 	if Input.is_action_pressed(\"down\"):
 		#if wall is above character
@@ -246,10 +241,11 @@ func _physics_process(delta):
 		velocity.y += 20
 
 	if state == States.On_Wall:
-		$WallcheckJump.target_position.x = -35
 		if Input.is_action_just_pressed(\"right\"):
 			state = States.Falling
 		if Input.is_action_just_pressed(\"left\"):
+			state = States.Falling
+		if !is_on_wall() and !$Wallcheck.is_colliding() and !$Wallcheck2.is_colliding():
 			state = States.Falling
 		anim.play(\"onwall\")
 		if velocity.y > 0:
@@ -264,10 +260,8 @@ func _physics_process(delta):
 				gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
 				velocity.y *= 1.15
 			if velocity.y > 600:
-				print(\"whoops!\")
 				state = States.Falling
 	else:
-		$WallcheckJump.target_position.x = 35
 		wallslow = true
 		timerstarted = false
 		gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
@@ -285,6 +279,7 @@ func _physics_process(delta):
 	if not Input.is_action_pressed(\"up\") and state == States.Jumping:
 		velocity.y *= .90
 	move_and_slide()
+
 
 func _on_hit_area_body_entered(body):
 	body.health -= 1
@@ -459,6 +454,8 @@ animations = [{
 [node name="Player" type="CharacterBody2D"]
 position = Vector2(505, 299)
 collision_layer = 2
+platform_floor_layers = 4294967265
+platform_wall_layers = 1
 script = SubResource("GDScript_vsbh0")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
@@ -552,9 +549,13 @@ position = Vector2(5, -3)
 sprite_frames = SubResource("SpriteFrames_ko7na")
 animation = &"walk"
 
-[node name="WallcheckJump" type="RayCast2D" parent="."]
+[node name="Wallcheck" type="RayCast2D" parent="."]
 position = Vector2(0, -9)
 target_position = Vector2(35, 0)
+
+[node name="Wallcheck2" type="RayCast2D" parent="."]
+position = Vector2(0, -9)
+target_position = Vector2(-35, 0)
 
 [connection signal="timeout" from="SlideTimer" to="." method="_on_slide_timer_timeout"]
 [connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]
