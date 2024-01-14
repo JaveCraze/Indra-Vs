@@ -75,6 +75,7 @@ func handle_wall_jump():
 	if Input.is_action_just_pressed(\"up\") and wall_normal == Vector2.LEFT and state != States.Walljumping: #and !Input.is_action_pressed(\"right\"):
 		state = States.Walljumping
 		walljumpbegin = true
+		velocity.x = 0
 		velocity.x -= walljumpvelocity
 		jump()
 		if lookinleft == false:
@@ -83,6 +84,7 @@ func handle_wall_jump():
 	if Input.is_action_just_pressed(\"up\") and wall_normal == Vector2.RIGHT and state != States.Walljumping: #and !Input.is_action_pressed(\"left\"):
 		state = States.Walljumping
 		walljumpbegin = true
+		velocity.x = 0
 		velocity.x += walljumpvelocity
 		jump()
 		if lookinleft == true:
@@ -551,6 +553,7 @@ sprite_frames = SubResource("SpriteFrames_ko7na")
 animation = &"walk"
 
 [node name="WallcheckJump" type="RayCast2D" parent="."]
+position = Vector2(0, -9)
 target_position = Vector2(35, 0)
 
 [connection signal="timeout" from="SlideTimer" to="." method="_on_slide_timer_timeout"]
