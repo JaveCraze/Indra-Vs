@@ -106,7 +106,7 @@ func _on_killzone_body_entered(_body):
 func _physics_process(delta):
 	get_wall_normal()
 	var direction = Input.get_axis(\"left\", \"right\")
-	if state != States.Walljumping:
+	if state != States.Walljumping and state != States.Sliding:
 		if direction:
 			velocity.x = direction * SPEED
 		else:
@@ -225,12 +225,11 @@ func _physics_process(delta):
 		anim.play(\"slide\")
 		Standingcshape.disabled = true
 		Crouchingcshape.disabled = false
+		SPEED = slidespeed 
 		if sliding == false:
 			if cantuncrouch == false:
-				lerp(velocity.x, 0.0, .3)
-		else: 
-			velocity.x = direction * SPEED
-		if cantuncrouch == false and sliding == false and velocity.x >= -lowvelocity and velocity.x <= lowvelocity:
+				velocity.x = 0
+		if velocity.x == 0:
 			state = States.Ground
 	else:
 		SPEED = basespeed
