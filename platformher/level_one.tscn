@@ -232,7 +232,7 @@ physics_layer_0/collision_layer = 1
 sources/0 = SubResource("TileSetAtlasSource_i2gjp")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_vkqex"]
-size = Vector2(1740.5, 248.5)
+size = Vector2(1740.5, 362.5)
 
 [node name="LevelOne" type="Node2D"]
 
@@ -360,7 +360,7 @@ position = Vector2(1151, 918)
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Killzone"]
-position = Vector2(77.75, 9.25)
+position = Vector2(77.75, -47.75)
 shape = SubResource("RectangleShape2D_vkqex")
 
 [node name="WinSpace" parent="." instance=ExtResource("10_3jf86")]
