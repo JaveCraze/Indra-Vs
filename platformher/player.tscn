@@ -7,13 +7,14 @@
 [sub_resource type="GDScript" id="GDScript_vsbh0"]
 script/source = "extends CharacterBody2D
 @onready var anim = $IndraAnimator
-var basespeed = 500.0
+var basespeed = 470.0
 var slidespeed = 900
 var walljumpbegin = false
 var SPEED = basespeed
 var accel = .09
-const JUMP_VELOCITY = -600.0
-var walljumpvelocity = 600
+var jumpresistance = .74
+const JUMP_VELOCITY = -800.0
+var walljumpvelocity = 570
 var lowvelocity = 20
 enum States {Ground, Jumping, Falling, On_Wall, Walljumping, Walking, Crouching, Sneaking, Sliding}
 #pipe state is connected to jumping, fix that
@@ -44,7 +45,7 @@ func _ready():
 	state = WeaponStates.Fist
 
 func jump():
-	velocity.y = JUMP_VELOCITY
+	velocity.y = lerp(velocity.y, JUMP_VELOCITY, jumpresistance) 
 	justjumped = true
 	if state != States.Walljumping:
 		state = States.Jumping
@@ -108,12 +109,15 @@ func _physics_process(delta):
 	var direction = Input.get_axis(\"left\", \"right\")
 	if state != States.Walljumping and state != States.Sliding:
 		if direction:
-			velocity.x = direction * SPEED
+			if is_on_floor():
+				velocity.x = direction * SPEED
+			if !is_on_floor():
+				velocity.x = lerp(velocity.x, direction * SPEED, 0.08)
 		else:
 			if is_on_floor():
-				velocity.x = lerp(velocity.x, 0.0, .5)
+				velocity.x = lerp(velocity.x, 0.0, .3)
 			else:
-				velocity.x = lerp(velocity.x, 0.0, .06)
+				velocity.x = lerp(velocity.x, 0.0, .08)
 	if direction != 0 and state != States.Walljumping and state != States.Sliding:
 		if direction >0 and lookinleft == true:
 			lookinleft = false
@@ -211,12 +215,15 @@ func _physics_process(delta):
 	if Input.is_action_pressed(\"down\"):
 		#if wall is above character
 		#disable crouch
+		SPEED = slidespeed 
 		if state == States.Walking and (velocity.x > 400 or velocity.x < -400):
 			beginslide()
 		if Input.is_action_just_pressed(\"right\"):
 			beginslide()
 		if Input.is_action_just_pressed(\"left\"):
 			beginslide()
+	else:
+		SPEED = basespeed
 	#else: 
 		#Standingcshape.disabled = false
 		#Crouchingcshape.disabled = true
@@ -228,8 +235,8 @@ func _physics_process(delta):
 		SPEED = slidespeed 
 		if sliding == false:
 			if cantuncrouch == false:
-				velocity.x = 0
-		if velocity.x == 0:
+				velocity.x = lerp(velocity.x, 0.0, .2)
+		if velocity.x >= -lowvelocity and velocity.x <= lowvelocity:
 			state = States.Ground
 	else:
 		SPEED = basespeed
@@ -243,6 +250,8 @@ func _physics_process(delta):
 	if state == States.Falling:
 		anim.play(\"fall\")
 		velocity.y += 20
+		if is_on_floor():
+			state = States.Ground
 
 	if state == States.On_Wall:
 		if Input.is_action_just_pressed(\"right\"):
@@ -556,11 +565,11 @@ animation = &"walk"
 
 [node name="Wallcheck" type="RayCast2D" parent="."]
 position = Vector2(0, -9)
-target_position = Vector2(35, 0)
+target_position = Vector2(20, 0)
 
 [node name="Wallcheck2" type="RayCast2D" parent="."]
 position = Vector2(0, -9)
-target_position = Vector2(-35, 0)
+target_position = Vector2(-20, 0)
 
 [connection signal="timeout" from="SlideTimer" to="." method="_on_slide_timer_timeout"]
 [connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]
