@@ -237,7 +237,7 @@ size = Vector2(1740.5, 362.5)
 [node name="LevelOne" type="Node2D"]
 
 [node name="Player" parent="." instance=ExtResource("1_v5qwt")]
-position = Vector2(1882, 429)
+position = Vector2(1075, 558)
 floor_constant_speed = true
 floor_snap_length = 9.0
 
@@ -346,6 +346,15 @@ offset_right = 108.0
 offset_bottom = 97.0
 script = ExtResource("10_4rqxc")
 
+[node name="placeholder reminder" type="Label" parent="Player/Camera2D/CanvasLayer"]
+offset_left = 2.0
+offset_top = 328.0
+offset_right = 258.0
+offset_bottom = 354.0
+text = "all animations are placeholders :3"
+horizontal_alignment = 2
+vertical_alignment = 2
+
 [node name="TileMap" type="TileMap" parent="."]
 tile_set = SubResource("TileSet_1lho2")
 cell_quadrant_size = 24
@@ -367,7 +376,16 @@ shape = SubResource("RectangleShape2D_vkqex")
 position = Vector2(3146, 64)
 
 [node name="BasicEnemy" parent="." instance=ExtResource("11_wjw23")]
-position = Vector2(744, 563)
+position = Vector2(1169, 563)
+scale = Vector2(1, 1)
+
+[node name="BasicEnemy2" parent="." instance=ExtResource("11_wjw23")]
+position = Vector2(1037, 559)
+scale = Vector2(1, 1)
+
+[node name="BasicEnemy3" parent="." instance=ExtResource("11_wjw23")]
+position = Vector2(1237, 558)
+scale = Vector2(1, 1)
 
 [connection signal="paused" from="Player" to="Player/Camera2D/CanvasLayer/ColorRect" method="_on_player_paused"]
 [connection signal="paused" from="Player" to="Player/Camera2D/CanvasLayer/Unpause Button" method="_on_player_paused"]

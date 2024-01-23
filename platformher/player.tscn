@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://eb45g6exg3qh"]
+[gd_scene load_steps=22 format=3 uid="uid://eb45g6exg3qh"]
 
 [ext_resource type="Texture2D" uid="uid://djy8ppnshq75b" path="res://icon.svg" id="1_rc4rb"]
 [ext_resource type="Texture2D" uid="uid://bgmafcpbp4s74" path="res://placeholderanim.png" id="2_e40cc"]
@@ -14,13 +14,18 @@ var SPEED = basespeed
 var accel = .09
 var jumpresistance = .74
 const JUMP_VELOCITY = -800.0
+var damage = 1
 var walljumpvelocity = 570
+var airattackvelocity = 500
+var attackvelocity = 800
+var airattacks = true
 var lowvelocity = 20
-enum States {Ground, Jumping, Falling, On_Wall, Walljumping, Walking, Crouching, Sneaking, Sliding}
+enum States {Ground, Jumping, Falling, On_Wall, Walljumping, Walking, Crouching, Sneaking, Sliding, Attacking, AirAttack}
 #pipe state is connected to jumping, fix that
 enum WeaponStates {Fist, Pipe}
 var nojumps = false
 var state : int = States.Ground
+var weapon : int = WeaponStates.Fist
 var gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
 var coyote = false
 var coyote_frames = 3
@@ -34,6 +39,7 @@ var timerstarted = false
 var cantuncrouch = false
 var sliding = false
 var attacking = false 
+var airattacking = false
 @onready var Standingcshape = $PlayerCol
 @onready var Crouchingcshape = $CrouchCol
 @onready var hitbox = $HitArea
@@ -43,6 +49,7 @@ signal paused
 func _ready():
 	Gamemanager.player = self
 	state = WeaponStates.Fist
+	state = States.Ground
 
 func jump():
 	velocity.y = lerp(velocity.y, JUMP_VELOCITY, jumpresistance) 
@@ -64,6 +71,9 @@ func _on_wall_col_check_timer_timeout():
 	canwallcolcheck = true
 func _on_attack_timer_timeout():
 	attacking = false
+	hitbox.monitoring = false
+func _on_air_attack_timer_timeout():
+	airattacking = false
 	hitbox.monitoring = false
 func beginslide():
 	state = States.Sliding
@@ -97,10 +107,21 @@ func handle_wall_jump():
 			scale.x = -1.0
 func handle_attack():
 	if Input.is_action_just_pressed(\"attack\"):
-		if attacking == false:
-			$AttackTimer.start()
-			hitbox.monitoring = true
-			attacking = true
+		if is_on_floor() and !Input.is_action_pressed(\"up\") and !cantuncrouch:
+			if attacking == false:
+				velocity.x = 0
+				if lookinleft == false:
+					velocity.x += attackvelocity
+				else:
+					velocity.x -= attackvelocity
+				state = States.Attacking
+		else:
+			#if state == States.Jumping or state == States.Falling or state == States.Walljumping:
+			if airattacks == true and !cantuncrouch:
+				print(\"attackair!\")
+				if airattacking == false:
+					print(\"attackair!2\")
+					state = States.AirAttack
 func _on_killzone_body_entered(_body):
 	print(\"dead\")
 	die()
@@ -109,7 +130,7 @@ func _physics_process(delta):
 	var direction = Input.get_axis(\"left\", \"right\")
 	if state != States.Walljumping and state != States.Sliding:
 		if direction:
-			if is_on_floor():
+			if is_on_floor() and state != States.Attacking:
 				velocity.x = direction * SPEED
 			if !is_on_floor():
 				velocity.x = lerp(velocity.x, direction * SPEED, 0.08)
@@ -161,23 +182,24 @@ func _physics_process(delta):
 		
 
 #Manages groundedstate
-	if is_on_floor() and !cantuncrouch and state != States.Sliding and velocity.x >= -lowvelocity and velocity.x <= lowvelocity: #and !Input.is_action_just_pressed(\"left\") or !Input.is_action_just_pressed(\"right\"):
+	if is_on_floor() and !cantuncrouch and state != States.Sliding and attacking != true and velocity.x >= -lowvelocity and velocity.x <= lowvelocity: #and !Input.is_action_just_pressed(\"left\") or !Input.is_action_just_pressed(\"right\"):
 		state = States.Ground
-		nojumps = false
-		justjumped = false
-		walljumpbegin = false
-		coyotestarted = false
-	if velocity.y > 0 and !cantuncrouch and state != States.On_Wall:
+	if velocity.y > 0 and !cantuncrouch and state != States.On_Wall and airattacking == false:
 		state = States.Falling
 
-#Manages jump buffer jumping when hit floor
+#Manages floor refreshes
 	if is_on_floor():
 		if jumpbuffer == true:
 			jump()
 			jumpbuffer = false
+		airattacks = true
+		nojumps = false
+		justjumped = false
+		walljumpbegin = false
+		coyotestarted = false
 
 	if velocity.x < -lowvelocity and is_on_floor() or velocity.x > lowvelocity and is_on_floor():
-		if not Input.is_action_pressed(\"down\") and sliding == false and !cantuncrouch and (Input.is_action_pressed(\"left\") or Input.is_action_pressed(\"right\")):
+		if not Input.is_action_pressed(\"down\") and sliding == false and !cantuncrouch and (Input.is_action_pressed(\"left\") or Input.is_action_pressed(\"right\")) and attacking == false:
 			state = States.Walking
 
 	#if Input.is_action_pressed(\"scan\") and state == States.Ground:
@@ -236,7 +258,7 @@ func _physics_process(delta):
 		if sliding == false:
 			if cantuncrouch == false:
 				velocity.x = lerp(velocity.x, 0.0, .2)
-		if velocity.x >= -lowvelocity and velocity.x <= lowvelocity:
+		if velocity.x >= -lowvelocity and velocity.x <= lowvelocity and is_on_floor():
 			state = States.Ground
 	else:
 		SPEED = basespeed
@@ -248,12 +270,40 @@ func _physics_process(delta):
 
 
 	if state == States.Falling:
+		if Input.is_action_just_pressed(\"attack\"):
+			if airattacks == true and !cantuncrouch and airattacking == false:
+					print(\"attackair!\")
+					state = States.AirAttack
 		anim.play(\"fall\")
 		velocity.y += 20
 		if is_on_floor():
 			state = States.Ground
 
+	if state == States.Attacking:
+		if attacking == false:
+			$AttackTimer.start()
+			attacking = true
+		hitbox.monitoring = true
+		anim.play(\"attack\")
+		if attacking == false:
+			hitbox.monitoring = false
+			state = States.Ground
+
+	if state == States.AirAttack:
+		if airattacking == false:
+			airattacking = true
+			velocity.y = 0
+			velocity.y -= airattackvelocity
+			print(\"airattacktrue\")
+			$AirAttackTimer.start()
+		hitbox.monitoring = true
+		anim.play(\"airattack\")
+		if airattacking == false:
+			hitbox.monitoring = false
+			state = States.Falling
+
 	if state == States.On_Wall:
+		airattacks = true
 		if Input.is_action_just_pressed(\"right\"):
 			state = States.Falling
 		if Input.is_action_just_pressed(\"left\"):
@@ -295,8 +345,8 @@ func _physics_process(delta):
 
 
 func _on_hit_area_body_entered(body):
-	body.health -= 1
 	print(body.name)
+	body.hit(damage)
 
 
 
@@ -353,10 +403,14 @@ func _process(_delta):
 		text = (\"sneaking\")
 	if player.state == player.States.Sliding:
 		text = (\"sliding\")
+	if player.state == player.States.Attacking:
+		text = (\"attack\")
+	if player.state == player.States.AirAttack:
+		text = (\"airattack\")
 "
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j0dwg"]
-size = Vector2(109.833, 78.3333)
+size = Vector2(31.4998, 78.3333)
 
 [sub_resource type="Animation" id="Animation_nf2le"]
 resource_name = "Idle"
@@ -365,6 +419,14 @@ resource_name = "Idle"
 _data = {
 "Idle": SubResource("Animation_nf2le")
 }
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_im58a"]
+atlas = ExtResource("3_ikpvk")
+region = Rect2(180, 0, 180, 180)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_f6316"]
+atlas = ExtResource("3_ikpvk")
+region = Rect2(1440, 0, 180, 180)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_711ci"]
 atlas = ExtResource("3_ikpvk")
@@ -400,6 +462,22 @@ region = Rect2(1260, 0, 180, 180)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_ko7na"]
 animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_im58a")
+}],
+"loop": true,
+"name": &"airattack",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_f6316")
+}],
+"loop": true,
+"name": &"attack",
+"speed": 5.0
+}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_711ci")
@@ -516,6 +594,10 @@ one_shot = true
 wait_time = 0.7
 one_shot = true
 
+[node name="AirAttackTimer" type="Timer" parent="."]
+wait_time = 0.7
+one_shot = true
+
 [node name="AboveCollision" type="RayCast2D" parent="."]
 target_position = Vector2(0, -40)
 hit_from_inside = true
@@ -544,7 +626,7 @@ collision_mask = 16
 monitoring = false
 
 [node name="HitboxCol" type="CollisionShape2D" parent="HitArea"]
-position = Vector2(88.4167, -2.83336)
+position = Vector2(49.2501, -2.83337)
 shape = SubResource("RectangleShape2D_j0dwg")
 
 [node name="Sprites" type="Sprite2D" parent="."]
@@ -561,7 +643,7 @@ libraries = {
 texture_filter = 1
 position = Vector2(5, -3)
 sprite_frames = SubResource("SpriteFrames_ko7na")
-animation = &"walk"
+animation = &"airattack"
 
 [node name="Wallcheck" type="RayCast2D" parent="."]
 position = Vector2(0, -9)
@@ -576,5 +658,6 @@ target_position = Vector2(-20, 0)
 [connection signal="timeout" from="JumpBuffer" to="." method="_on_jump_buffer_timeout"]
 [connection signal="timeout" from="WallSlowTimer" to="." method="_on_wall_slow_timer_timeout"]
 [connection signal="timeout" from="AttackTimer" to="." method="_on_attack_timer_timeout"]
+[connection signal="timeout" from="AirAttackTimer" to="." method="_on_air_attack_timer_timeout"]
 [connection signal="timeout" from="WallColCheckTimer" to="." method="_on_wall_col_check_timer_timeout"]
 [connection signal="body_entered" from="HitArea" to="." method="_on_hit_area_body_entered"]

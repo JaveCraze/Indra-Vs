@@ -7,7 +7,7 @@ func _ready():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
-	if Gamemanager.player.state == Gamemanager.player.WeaponStates.Fist:
+	if Gamemanager.player.weapon == Gamemanager.player.WeaponStates.Fist:
 		text = "Weapon: " + ("Fist")
-	if Gamemanager.player.state == Gamemanager.player.WeaponStates.Pipe:
+	if Gamemanager.player.weapon == Gamemanager.player.WeaponStates.Pipe:
 		text = "Weapon: " + ("Pipe")
