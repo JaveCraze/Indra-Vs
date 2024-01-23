@@ -71,10 +71,8 @@ func _on_wall_slow_timer_timeout():
 	wallslow = false
 func _on_slide_timer_timeout():
 		sliding = false
-		print(\"slideend\")
 func _on_start_up_timer_timeout():
 	attackstartup = false
-	print(\"startout\")
 func _on_wall_col_check_timer_timeout():
 	canwallcolcheck = true
 func _on_attack_timer_timeout():
@@ -89,13 +87,11 @@ func beginslide():
 	if sliding == false:
 		$SlideTimer.start()
 		sliding = true
-		print(\"slidestart\")
 func handle_wall_jump():
 	if state != States.On_Wall: return
 	var wall_normal = get_wall_normal()
 	#handle wall jump
 	if Input.is_action_just_pressed(\"up\") and wall_normal == Vector2.LEFT and state != States.Walljumping: #and !Input.is_action_pressed(\"right\"):
-		print(\"walljump\")
 		state = States.Walljumping
 		walljumpbegin = true
 		velocity.x = 0
@@ -105,7 +101,6 @@ func handle_wall_jump():
 			lookinleft = true
 			scale.x = -1.0
 	if Input.is_action_just_pressed(\"up\") and wall_normal == Vector2.RIGHT and state != States.Walljumping: #and !Input.is_action_pressed(\"left\"):
-		print(\"walljump\")
 		state = States.Walljumping
 		walljumpbegin = true
 		velocity.x = 0
@@ -128,9 +123,7 @@ func handle_attack():
 		else:
 			#if state == States.Jumping or state == States.Falling or state == States.Walljumping:
 			if airattacks == true and !cantuncrouch:
-				print(\"attackair!\")
 				if airattacking == false:
-					print(\"attackair!2\")
 					state = States.AirAttack
 func handle_heavy_attack():
 	if Input.is_action_just_pressed(\"heavy\"):
@@ -294,18 +287,14 @@ func _physics_process(delta):
 	if velocity.x < -0 and is_on_floor() and attacking == false:
 		if Input.is_action_pressed(\"right\"):
 			state = States.Turning
-			print(\"turning\")
 		if Input.is_action_just_pressed(\"right\"):
 			state = States.Turning
-			print(\"turning\")
 	#if walking right
 	if velocity.x > 0 and is_on_floor() and attacking == false:
 		if Input.is_action_pressed(\"left\"):
 			state = States.Turning
-			print(\"turning\")
 		if Input.is_action_just_pressed(\"left\"):
 			state = States.Turning
-			print(\"turning\")
 
 #turn state
 	if state == States.Turning:
@@ -320,7 +309,6 @@ func _physics_process(delta):
 	if state == States.Falling:
 		if Input.is_action_just_pressed(\"attack\"):
 			if airattacks == true and !cantuncrouch and airattacking == false:
-					print(\"attackair!\")
 					state = States.AirAttack
 		anim.play(\"fall\")
 		velocity.y += 20
@@ -355,13 +343,11 @@ func _physics_process(delta):
 			attack2 = true
 			attacking = true
 			attackstartup = true
-			print(\"doble\")
 		hitbox.monitoring = true
 		anim.play(\"attack\")
 		if attackstartup == false:
 			hitbox.monitoring = false
 		if Input.is_action_just_pressed(\"attack\") and attacking == true and attackstartup == false: #and attackstartup == false and is_on_floor():
-			print(\"SUPER\")
 			if lookinleft == false:
 				velocity.x += attackvelocity3
 			else:
@@ -372,6 +358,18 @@ func _physics_process(delta):
 			hitbox.monitoring = false
 			state = States.Ground
 
+	if state == States.Attack3:
+		if attacking == false:
+			$StartUpTimer.start()
+			$AttackTimer.start()
+			attack2 = true
+			attacking = true
+			attackstartup = true
+		hitbox.monitoring = true
+		anim.play(\"attack\")
+		if attackstartup == false and attacking == false:
+			print(\"falsey\")
+			hitbox.monitoring = false
 
 	if state == States.AirAttack:
 		if airattacking == false:
@@ -379,7 +377,6 @@ func _physics_process(delta):
 			airattacking = true
 			velocity.y = 0
 			velocity.y -= airattackvelocity
-			print(\"airattacktrue\")
 			$AirAttackTimer.start()
 		hitbox.monitoring = true
 		anim.play(\"airattack\")
@@ -430,7 +427,6 @@ func _physics_process(delta):
 
 
 func _on_hit_area_body_entered(body):
-	print(body.name)
 	body.hit(damage)
 	if body.knockspeed:
 		if state == States.Attack1:
@@ -441,7 +437,6 @@ func _on_hit_area_body_entered(body):
 			body.knockspeed = 300
 
 func _on_turnstatetimer_timeout():
-	print(\"turntimeout\")
 	turnstarted = false
 	if is_on_floor():
 		state = States.Ground
@@ -499,7 +494,7 @@ func _process(_delta):
 "
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j0dwg"]
-size = Vector2(45, 78.3333)
+size = Vector2(31, 78.3333)
 
 [sub_resource type="Animation" id="Animation_nf2le"]
 resource_name = "Idle"
@@ -555,7 +550,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_im58a")
 }],
-"loop": true,
+"loop": false,
 "name": &"airattack",
 "speed": 5.0
 }, {
@@ -563,7 +558,7 @@ animations = [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_f6316")
 }],
-"loop": true,
+"loop": false,
 "name": &"attack",
 "speed": 5.0
 }, {
@@ -715,7 +710,7 @@ collision_mask = 16
 monitoring = false
 
 [node name="HitboxCol" type="CollisionShape2D" parent="HitArea"]
-position = Vector2(42.5, -2.83337)
+position = Vector2(35.5, -2.83337)
 shape = SubResource("RectangleShape2D_j0dwg")
 
 [node name="Sprites" type="Sprite2D" parent="."]
@@ -747,7 +742,7 @@ wait_time = 0.3
 one_shot = true
 
 [node name="StartUpTimer" type="Timer" parent="."]
-wait_time = 0.2
+wait_time = 0.4
 one_shot = true
 
 [connection signal="timeout" from="SlideTimer" to="." method="_on_slide_timer_timeout"]
