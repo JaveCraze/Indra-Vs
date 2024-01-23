@@ -17,10 +17,12 @@ const JUMP_VELOCITY = -800.0
 var damage = 1
 var walljumpvelocity = 570
 var airattackvelocity = 500
-var attackvelocity = 800
+var attackvelocity = 700
+var attackvelocity2 = 500
+var attackvelocity3 = 900
 var airattacks = true
 var lowvelocity = 20
-enum States {Ground, Jumping, Falling, On_Wall, Walljumping, Walking, Crouching, Sneaking, Sliding, Attacking, AirAttack}
+enum States {Ground, Jumping, Falling, On_Wall, Walljumping, Walking, Crouching, Sneaking, Sliding, Attack1, Attack2, Attack3, AirAttack, Turning}
 #pipe state is connected to jumping, fix that
 enum WeaponStates {Fist, Pipe}
 var nojumps = false
@@ -29,6 +31,7 @@ var weapon : int = WeaponStates.Fist
 var gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
 var coyote = false
 var coyote_frames = 3
+var turnstarted = false
 var lookinleft = false
 var justjumped = false
 var coyotestarted = false
@@ -39,7 +42,9 @@ var timerstarted = false
 var cantuncrouch = false
 var sliding = false
 var attacking = false 
+var attack2 = false
 var airattacking = false
+var attackstartup = false
 @onready var Standingcshape = $PlayerCol
 @onready var Crouchingcshape = $CrouchCol
 @onready var hitbox = $HitArea
@@ -67,10 +72,14 @@ func _on_wall_slow_timer_timeout():
 func _on_slide_timer_timeout():
 		sliding = false
 		print(\"slideend\")
+func _on_start_up_timer_timeout():
+	attackstartup = false
+	print(\"startout\")
 func _on_wall_col_check_timer_timeout():
 	canwallcolcheck = true
 func _on_attack_timer_timeout():
 	attacking = false
+	attack2 = false
 	hitbox.monitoring = false
 func _on_air_attack_timer_timeout():
 	airattacking = false
@@ -114,7 +123,8 @@ func handle_attack():
 					velocity.x += attackvelocity
 				else:
 					velocity.x -= attackvelocity
-				state = States.Attacking
+				state = States.Attack1
+
 		else:
 			#if state == States.Jumping or state == States.Falling or state == States.Walljumping:
 			if airattacks == true and !cantuncrouch:
@@ -122,6 +132,10 @@ func handle_attack():
 				if airattacking == false:
 					print(\"attackair!2\")
 					state = States.AirAttack
+func handle_heavy_attack():
+	if Input.is_action_just_pressed(\"heavy\"):
+		print(\"tamo HEAVY\")
+		pass
 func _on_killzone_body_entered(_body):
 	print(\"dead\")
 	die()
@@ -129,17 +143,21 @@ func _physics_process(delta):
 	get_wall_normal()
 	var direction = Input.get_axis(\"left\", \"right\")
 	if state != States.Walljumping and state != States.Sliding:
-		if direction:
-			if is_on_floor() and state != States.Attacking:
-				velocity.x = direction * SPEED
+		if direction and attacking == false:
+			if is_on_floor():
+				velocity.x = lerp(velocity.x, direction * SPEED, .3)
 			if !is_on_floor():
 				velocity.x = lerp(velocity.x, direction * SPEED, 0.08)
 		else:
 			if is_on_floor():
-				velocity.x = lerp(velocity.x, 0.0, .3)
+				if attacking:
+					velocity.x = lerp(velocity.x, 0.0, .10)
+				else:
+					velocity.x = lerp(velocity.x, 0.0, .3)
 			else:
 				velocity.x = lerp(velocity.x, 0.0, .08)
-	if direction != 0 and state != States.Walljumping and state != States.Sliding:
+	#flip if turned
+	if direction != 0 and state != States.Walljumping and state != States.Sliding and !attacking and !airattacking:
 		if direction >0 and lookinleft == true:
 			lookinleft = false
 			scale.x = -1.0
@@ -148,7 +166,9 @@ func _physics_process(delta):
 			scale.x = -1.0
 	handle_wall_jump()
 	handle_attack()
+	handle_heavy_attack()
 	if state == States.Jumping:
+		turnstarted = false
 		anim.play(\"jump\")
 	if state == States.Walljumping:
 		if walljumpbegin == true:
@@ -198,8 +218,9 @@ func _physics_process(delta):
 		walljumpbegin = false
 		coyotestarted = false
 
+#handle walk state activation
 	if velocity.x < -lowvelocity and is_on_floor() or velocity.x > lowvelocity and is_on_floor():
-		if not Input.is_action_pressed(\"down\") and sliding == false and !cantuncrouch and (Input.is_action_pressed(\"left\") or Input.is_action_pressed(\"right\")) and attacking == false:
+		if !Input.is_action_pressed(\"down\") and sliding == false and !cantuncrouch and (Input.is_action_pressed(\"left\") or Input.is_action_pressed(\"right\")) and attacking == false and state != States.Turning and !Input.is_action_pressed(\"attack\"):
 			state = States.Walking
 
 	#if Input.is_action_pressed(\"scan\") and state == States.Ground:
@@ -268,6 +289,33 @@ func _physics_process(delta):
 		Standingcshape.disabled = true
 		Crouchingcshape.disabled = false
 
+#activate turn state
+	#if walking left
+	if velocity.x < -0 and is_on_floor() and attacking == false:
+		if Input.is_action_pressed(\"right\"):
+			state = States.Turning
+			print(\"turning\")
+		if Input.is_action_just_pressed(\"right\"):
+			state = States.Turning
+			print(\"turning\")
+	#if walking right
+	if velocity.x > 0 and is_on_floor() and attacking == false:
+		if Input.is_action_pressed(\"left\"):
+			state = States.Turning
+			print(\"turning\")
+		if Input.is_action_just_pressed(\"left\"):
+			state = States.Turning
+			print(\"turning\")
+
+#turn state
+	if state == States.Turning:
+		if turnstarted == false:
+			turnstarted = true
+			$turnstatetimer.start()
+			#will replace with turn anim
+			anim.play(\"crouch\")
+		#if turnstatetimer timeout
+		#state = ground
 
 	if state == States.Falling:
 		if Input.is_action_just_pressed(\"attack\"):
@@ -276,21 +324,58 @@ func _physics_process(delta):
 					state = States.AirAttack
 		anim.play(\"fall\")
 		velocity.y += 20
-		if is_on_floor():
+		if is_on_floor() and !Input.is_action_pressed(\"left\") and !Input.is_action_pressed(\"right\"):
 			state = States.Ground
 
-	if state == States.Attacking:
+	if state == States.Attack1:
 		if attacking == false:
+			$StartUpTimer.start()
 			$AttackTimer.start()
 			attacking = true
+			attackstartup = true
 		hitbox.monitoring = true
 		anim.play(\"attack\")
+		if attackstartup == false:
+			hitbox.monitoring = false
+		if Input.is_action_just_pressed(\"attack\") and attacking == true and attackstartup == false and is_on_floor():
+			if lookinleft == false:
+				velocity.x += attackvelocity2
+			else:
+				velocity.x -= attackvelocity2
+			state = States.Attack2
+		#deactivate attack
 		if attacking == false:
 			hitbox.monitoring = false
 			state = States.Ground
 
+	if state == States.Attack2:
+		if attack2 == false:
+			$StartUpTimer.start()
+			$AttackTimer.start()
+			attack2 = true
+			attacking = true
+			attackstartup = true
+			print(\"doble\")
+		hitbox.monitoring = true
+		anim.play(\"attack\")
+		if attackstartup == false:
+			hitbox.monitoring = false
+		if Input.is_action_just_pressed(\"attack\") and attacking == true and attackstartup == false: #and attackstartup == false and is_on_floor():
+			print(\"SUPER\")
+			if lookinleft == false:
+				velocity.x += attackvelocity3
+			else:
+				velocity.x -= attackvelocity3
+			if state != States.Attack1:
+				state = States.Attack3
+		if attacking == false:
+			hitbox.monitoring = false
+			state = States.Ground
+
+
 	if state == States.AirAttack:
 		if airattacking == false:
+			airattacks = false
 			airattacking = true
 			velocity.y = 0
 			velocity.y -= airattackvelocity
@@ -347,22 +432,19 @@ func _physics_process(delta):
 func _on_hit_area_body_entered(body):
 	print(body.name)
 	body.hit(damage)
+	if body.knockspeed:
+		if state == States.Attack1:
+			body.knockback_velocity.y = -10
+			body.knockspeed = 150
+		if state == States.Attack2:
+			body.knockback_velocity.y = -20
+			body.knockspeed = 300
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+func _on_turnstatetimer_timeout():
+	print(\"turntimeout\")
+	turnstarted = false
+	if is_on_floor():
+		state = States.Ground
 
 "
 
@@ -403,14 +485,21 @@ func _process(_delta):
 		text = (\"sneaking\")
 	if player.state == player.States.Sliding:
 		text = (\"sliding\")
-	if player.state == player.States.Attacking:
+	if player.state == player.States.Attack1:
 		text = (\"attack\")
+	if player.state == player.States.Attack2:
+		text = (\"attack2\")
+	if player.state == player.States.Attack3:
+		text = (\"attack3\")
 	if player.state == player.States.AirAttack:
 		text = (\"airattack\")
+	if player.state == player.States.Turning:
+		text = (\"turning\")
+
 "
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j0dwg"]
-size = Vector2(31.4998, 78.3333)
+size = Vector2(45, 78.3333)
 
 [sub_resource type="Animation" id="Animation_nf2le"]
 resource_name = "Idle"
@@ -626,7 +715,7 @@ collision_mask = 16
 monitoring = false
 
 [node name="HitboxCol" type="CollisionShape2D" parent="HitArea"]
-position = Vector2(49.2501, -2.83337)
+position = Vector2(42.5, -2.83337)
 shape = SubResource("RectangleShape2D_j0dwg")
 
 [node name="Sprites" type="Sprite2D" parent="."]
@@ -653,6 +742,14 @@ target_position = Vector2(20, 0)
 position = Vector2(0, -9)
 target_position = Vector2(-20, 0)
 
+[node name="turnstatetimer" type="Timer" parent="."]
+wait_time = 0.3
+one_shot = true
+
+[node name="StartUpTimer" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+
 [connection signal="timeout" from="SlideTimer" to="." method="_on_slide_timer_timeout"]
 [connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]
 [connection signal="timeout" from="JumpBuffer" to="." method="_on_jump_buffer_timeout"]
@@ -661,3 +758,5 @@ target_position = Vector2(-20, 0)
 [connection signal="timeout" from="AirAttackTimer" to="." method="_on_air_attack_timer_timeout"]
 [connection signal="timeout" from="WallColCheckTimer" to="." method="_on_wall_col_check_timer_timeout"]
 [connection signal="body_entered" from="HitArea" to="." method="_on_hit_area_body_entered"]
+[connection signal="timeout" from="turnstatetimer" to="." method="_on_turnstatetimer_timeout"]
+[connection signal="timeout" from="StartUpTimer" to="." method="_on_start_up_timer_timeout"]

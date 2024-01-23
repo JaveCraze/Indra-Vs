@@ -3,7 +3,7 @@ var health = 5
 
 const SPEED = 300.0
 const JUMP_VELOCITY = -400.0
-var knockback_velocity: Vector2 = Vector2(100,-50)
+var knockback_velocity: Vector2 = Vector2(100,-20)
 var knockspeed = 150
 enum States {Ground, Jumping, Falling, Walking, Hit, Dead}
 # Get the gravity from the project settings to be synced with RigidBody nodes.
