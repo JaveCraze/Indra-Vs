@@ -1,12 +1,13 @@
-[gd_scene load_steps=22 format=3 uid="uid://eb45g6exg3qh"]
+[gd_scene load_steps=28 format=3 uid="uid://eb45g6exg3qh"]
 
 [ext_resource type="Texture2D" uid="uid://djy8ppnshq75b" path="res://icon.svg" id="1_rc4rb"]
 [ext_resource type="Texture2D" uid="uid://bgmafcpbp4s74" path="res://placeholderanim.png" id="2_e40cc"]
 [ext_resource type="Texture2D" uid="uid://b0t1eyy7gvjg0" path="res://characteranim-Sheet.png" id="3_ikpvk"]
+[ext_resource type="Texture2D" uid="uid://c7fniq8kvoaa" path="res://rogueidle-Sheet.png" id="4_cx8v2"]
 
 [sub_resource type="GDScript" id="GDScript_vsbh0"]
 script/source = "extends CharacterBody2D
-@onready var anim = $IndraAnimator
+@onready var anim = $CharacterAnimator
 var basespeed = 470.0
 var slidespeed = 900
 var walljumpbegin = false
@@ -520,9 +521,29 @@ region = Rect2(900, 0, 180, 180)
 atlas = ExtResource("3_ikpvk")
 region = Rect2(540, 0, 180, 180)
 
-[sub_resource type="AtlasTexture" id="AtlasTexture_0drqw"]
-atlas = ExtResource("3_ikpvk")
+[sub_resource type="AtlasTexture" id="AtlasTexture_wdrjq"]
+atlas = ExtResource("4_cx8v2")
 region = Rect2(0, 0, 180, 180)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o8i2w"]
+atlas = ExtResource("4_cx8v2")
+region = Rect2(180, 0, 180, 180)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1w6yl"]
+atlas = ExtResource("4_cx8v2")
+region = Rect2(360, 0, 180, 180)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xtfgt"]
+atlas = ExtResource("4_cx8v2")
+region = Rect2(540, 0, 180, 180)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1fual"]
+atlas = ExtResource("4_cx8v2")
+region = Rect2(720, 0, 180, 180)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6283s"]
+atlas = ExtResource("4_cx8v2")
+region = Rect2(900, 0, 180, 180)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_elqlu"]
 atlas = ExtResource("3_ikpvk")
@@ -580,7 +601,22 @@ animations = [{
 }, {
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_0drqw")
+"texture": SubResource("AtlasTexture_wdrjq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o8i2w")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1w6yl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xtfgt")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1fual")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6283s")
 }],
 "loop": true,
 "name": &"idle",
@@ -723,11 +759,13 @@ libraries = {
 "": SubResource("AnimationLibrary_xpt2j")
 }
 
-[node name="IndraAnimator" type="AnimatedSprite2D" parent="."]
+[node name="CharacterAnimator" type="AnimatedSprite2D" parent="."]
 texture_filter = 1
-position = Vector2(5, -3)
+position = Vector2(5, -2)
 sprite_frames = SubResource("SpriteFrames_ko7na")
-animation = &"airattack"
+animation = &"idle"
+frame = 4
+frame_progress = 0.181945
 
 [node name="Wallcheck" type="RayCast2D" parent="."]
 position = Vector2(0, -9)
