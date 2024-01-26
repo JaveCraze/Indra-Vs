@@ -237,7 +237,7 @@ size = Vector2(1740.5, 362.5)
 [node name="LevelOne" type="Node2D"]
 
 [node name="Player" parent="." instance=ExtResource("1_v5qwt")]
-position = Vector2(60, 742)
+position = Vector2(60, 751)
 floor_constant_speed = true
 floor_snap_length = 9.0
 
