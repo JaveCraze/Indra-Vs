@@ -184,6 +184,7 @@ func _physics_process(delta):
 	handle_heavy_attack()
 	if on_slope == true:
 		if $Slopeforward.is_colliding():
+			if state != Sliding:
 				SPEED = upslopespeed
 		else:
 			if !$Slopebackward.is_colliding():
@@ -227,15 +228,32 @@ func _physics_process(delta):
 			Crouchingcshape.disabled = false
 			if velocity.y > 600 and !cantuncrouch:
 				state = Falling
+			if velocity.x > 0 and velocity.x < 100 and !cantuncrouch and !$Slopeforward.is_colliding() and lookinleft:
+				print(\"turnright\")
+				lookinleft = false
+				scale.x = -1.0
+			if velocity.x < 0 and velocity.x > -100 and !cantuncrouch and !$Slopebackward.is_colliding() and !lookinleft:
+				print(\"turnleft\")
+				lookinleft = true
+				scale.x = 1.0
 			#if !is_on_floor:
 				#anim.play(\"slidefalling\")
-			if $Slopebackward.is_colliding():
+			if $Slopebackward.is_colliding() and on_slope:
 				#anim.play(\"slidedown\")
 				if !lookinleft:
 					velocity.x = lerp(velocity.x, 900.0, .15)
 				if lookinleft:
 					velocity.x = lerp(velocity.x, -900.0, .15)
-			#if $Slopeforward.is_colliding():
+			if $Slopeforward.is_colliding() and on_slope:
+				if velocity.x > 700 or velocity.x < -700:
+					upslopespeed = 800
+				if !lookinleft and velocity.x == 0:
+					velocity.x = lerp(velocity.x, -900.0, 0.5)
+				if lookinleft and velocity.x == 0:
+					velocity.x = lerp(velocity.x, 900.0, .15)
+				if cantuncrouch and !$Slopebackward.is_colliding():
+					if lookinleft:
+						velocity.x = lerp(velocity.x, 900.0, .15)
 				#anim.play(\"slideup\")
 			if sliding == false:
 				if cantuncrouch == false and !$Slopebackward.is_colliding():
@@ -245,18 +263,20 @@ func _physics_process(delta):
 						if is_on_floor():
 							velocity.x = lerp(velocity.x, 0.0, .2)
 						else:
-							velocity.x = lerp(velocity.x, 0.0, .03)
+							velocity.x = lerp(velocity.x, 0.0, .003)
+							if velocity.y < 0:
+								velocity.y *= .7
 					slidecooldown = true
 					$SlideCoolTimer.start()
-			if velocity.x >= -lowvelocity and velocity.x <= lowvelocity and is_on_floor() and !cantuncrouch and !$Slopebackward.is_colliding():
-				state = Ground
-				if Input.is_action_pressed(\"down\"):
-					state = Crouching
-			if cantuncrouch:
+			if velocity.x >= -lowvelocity and velocity.x <= lowvelocity and is_on_floor() and !cantuncrouch:
+					state = Ground
+					if Input.is_action_pressed(\"down\"):
+						state = Crouching
+			if !on_slope and cantuncrouch:
 				if velocity.x > 0 and velocity.x < 601:
-					velocity.x = lerp(velocity.x, 600.0, .2)
+					velocity.x = lerp(velocity.x, 600.0, .6)
 				if velocity.x < 0 and velocity.x > -601:
-					velocity.x = lerp(velocity.x, -600.0, .2)
+					velocity.x = lerp(velocity.x, -600.0, .6)
 		Crouching:
 			anim.play(\"crouch\")
 			Standingcshape.disabled = true
@@ -430,6 +450,8 @@ func _physics_process(delta):
 		coyotestarted = false
 		if !$Slopechecker.is_colliding():
 			on_slope = true
+		else:
+			on_slope = false
 
 #handle walk state activation
 	if velocity.x < -lowvelocity and is_on_floor() or velocity.x > lowvelocity and is_on_floor():
@@ -470,15 +492,19 @@ func _physics_process(delta):
 	#if walking left
 	if velocity.x < -0 and is_on_floor() and attacking == false and state != Crouching and !cantuncrouch and attackstartup == false:
 		if Input.is_action_pressed(\"right\"):
-			state = Turning
+			if state != Sliding:
+				state = Turning
 		if Input.is_action_just_pressed(\"right\"):
-			state = Turning
+			if state != Sliding:
+				state = Turning
 	#if walking right
 	if velocity.x > 0 and is_on_floor() and attacking == false and state != Crouching  and !cantuncrouch and attackstartup == false:
 		if Input.is_action_pressed(\"left\"):
-			state = Turning
+			if state != Sliding:
+				state = Turning
 		if Input.is_action_just_pressed(\"left\"):
-			state = Turning
+			if state != Sliding:
+				state = Turning
 
 #turn state
 
@@ -537,8 +563,8 @@ radius = 19.0
 height = 92.0
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_rqd24"]
-radius = 19.0
-height = 45.7338
+radius = 17.0
+height = 34.0
 
 [sub_resource type="GDScript" id="GDScript_bmjrg"]
 script/source = "extends Label
@@ -807,7 +833,7 @@ rotation = 3.14159
 shape = SubResource("CapsuleShape2D_g1m73")
 
 [node name="CrouchCol" type="CollisionShape2D" parent="."]
-position = Vector2(0, 17.8669)
+position = Vector2(0, 23.8669)
 rotation = 3.14159
 shape = SubResource("CapsuleShape2D_rqd24")
 disabled = true
