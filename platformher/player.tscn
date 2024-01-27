@@ -10,8 +10,10 @@
 script/source = "extends CharacterBody2D
 @onready var anim = $CharacterAnimator
 var basespeed = 430.0
-var slidespeed = 600
-var walljumpbegin = false
+var upslopespeed = 280.0
+var downslopespeed = 500
+var slidespeed = 1.3
+var walljumpbegin : bool = false
 var SPEED = basespeed
 var accel = .09
 var jumpresistance = .74
@@ -21,49 +23,52 @@ var walljumpvelocity = 570
 var airattackvelocity = 500
 var attackvelocity = 700
 var attackvelocity2 = 500
-var attackvelocity3 = 900
-var airattacks = true
+var attackvelocity3 = 600
+var airattacks : bool = true
 var lowvelocity = 20
+var on_slope : bool = false
 enum {Ground, Jumping, Falling, On_Wall, Walljumping, Walking, Crouching, Sneaking, Sliding, Attack1, Attack2, Attack3, AirAttack, Turning}
 #pipe state is connected to jumping, fix that
 enum WeaponStates {Fist, Pipe}
-var nojumps = false
+var nojumps : bool = false
 var state : int = Ground
 var weapon : int = WeaponStates.Fist
 var gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
-var coyote = false
+var coyote : bool = false
 var coyote_frames = 3
-var turnstarted = false
-var lookinleft = false
-var justjumped = false
-var coyotestarted = false
-var jumpbuffer = false
-var canwallcolcheck = true
-var wallslow = true
-var slidecooldown = false
-var timerstarted = false
-var cantuncrouch = false
-var sliding = false
-var attacking = false 
-var attack2 = false
-var airattacking = false
-var attackstartup = false
+var turnstarted : bool = false
+var lookinleft : bool = false
+var justjumped : bool = false
+var coyotestarted : bool = false
+var jumpbuffer : bool = false
+var canwallcolcheck : bool = true
+var wallslow : bool = true
+var slidecooldown : bool = false
+var attackcooldown : bool = false
+var timerstarted : bool = false
+var cantuncrouch : bool = false
+var sliding : bool = false
+var attacking : bool = false 
+var attack2 : bool = false
+var attack3 : bool = false
+var airattacking : bool = false
+var attackstartup : bool = false
 @onready var Standingcshape = $PlayerCol
 @onready var Crouchingcshape = $CrouchCol
 @onready var hitbox = $HitArea
 
 signal paused
 
-func _ready():
+func _ready() -> void:
 	Gamemanager.player = self
 	state = Ground
 
-func jump():
+func jump() -> void:
 	velocity.y = lerp(velocity.y, JUMP_VELOCITY, jumpresistance) 
 	justjumped = true
 	if state != Walljumping:
 		state = Jumping
-func die():
+func die() -> void:
 	Gamemanager.respawn_player()
 func _on_coyote_timer_timeout():
 	coyote = false
@@ -80,6 +85,7 @@ func _on_wall_col_check_timer_timeout():
 func _on_attack_timer_timeout():
 	attacking = false
 	attack2 = false
+	attack3 = false
 	hitbox.monitoring = false
 func _on_air_attack_timer_timeout():
 	print(\"yosh\")
@@ -87,10 +93,11 @@ func _on_air_attack_timer_timeout():
 	hitbox.monitoring = false
 func beginslide():
 	if !slidecooldown and state != Sliding and !slidecooldown:
+		floor_snap_length = 30
 		if lookinleft:
-			velocity.x = -slidespeed
+			velocity.x = -slidespeed * SPEED
 		else:
-			velocity.x = slidespeed
+			velocity.x = slidespeed * SPEED
 		state = Sliding
 		if sliding == false:
 			$SlideTimer.start()
@@ -119,17 +126,25 @@ func handle_wall_jump():
 			scale.x = -1.0
 func handle_attack():
 	if Input.is_action_just_pressed(\"attack\"):
-		if is_on_floor() and !Input.is_action_pressed(\"up\") and !cantuncrouch:
+		if is_on_floor() and !Input.is_action_pressed(\"up\") and !cantuncrouch and attackcooldown == false:
 			if attacking == false:
 				velocity.x = 0
 				if lookinleft == false:
 					velocity.x += attackvelocity
 				else:
 					velocity.x -= attackvelocity
+				if attacking == false:
+					print(\"letsbegin\")
+					$StartUpTimer.wait_time = 0.3
+					$StartUpTimer.start()
+					$AttackTimer.wait_time = 0.5
+					$AttackTimer.start()
+					attacking = true
+					attackstartup = true
 				state = Attack1
 		else:
 			#if state == States.Jumping or state == States.Falling or state == States.Walljumping:
-			if airattacks == true and !cantuncrouch:
+			if airattacks == true and !cantuncrouch and !is_on_floor():
 				if airattacking == false:
 					state = AirAttack
 func handle_heavy_attack():
@@ -167,6 +182,19 @@ func _physics_process(delta):
 	handle_wall_jump()
 	handle_attack()
 	handle_heavy_attack()
+	if on_slope == true:
+		if $Slopeforward.is_colliding():
+				SPEED = upslopespeed
+		else:
+			if !$Slopebackward.is_colliding():
+				SPEED = basespeed
+		if $Slopebackward.is_colliding():
+					SPEED = downslopespeed
+		else:
+			if !$Slopeforward.is_colliding():
+				SPEED = basespeed
+	else:
+		SPEED = basespeed
 	match state:
 		Jumping:
 			turnstarted = false
@@ -184,25 +212,46 @@ func _physics_process(delta):
 			sliding = false
 			if Input.is_action_pressed(\"down\"):
 				if velocity.x >= -lowvelocity and velocity.x <= lowvelocity and !cantuncrouch:
-					state = Crouching
+					if is_on_floor():
+						state = Crouching
+					else: 
+						velocity.y = lerp(velocity.y, basespeed, jumpresistance) 
 		Walking:
 			anim.play(\"walk\")
 			if Input.is_action_just_pressed(\"down\") and !slidecooldown and (velocity.x  > lowvelocity or velocity.x  < -lowvelocity):
 				beginslide()
 		Sliding:
+			floor_snap_length = 30
 			anim.play(\"slide\")
 			Standingcshape.disabled = true
 			Crouchingcshape.disabled = false
-			#SPEED = slidespeed 
+			if velocity.y > 600 and !cantuncrouch:
+				state = Falling
+			if $Slopebackward.is_colliding():
+				if !lookinleft:
+					velocity.x = lerp(velocity.x, 900.0, .15)
+				if lookinleft:
+					velocity.x = lerp(velocity.x, -900.0, .15)
 			if sliding == false:
-				if cantuncrouch == false:
-					velocity.x = lerp(velocity.x, 0.0, .2)
+				if cantuncrouch == false and !$Slopebackward.is_colliding():
+					if velocity.x > 630 or velocity.x < -630:
+						velocity.x = lerp(velocity.x, 0.0, .03)
+					else:
+						if is_on_floor():
+							velocity.x = lerp(velocity.x, 0.0, .2)
+						else:
+							velocity.x = lerp(velocity.x, 0.0, .03)
 					slidecooldown = true
 					$SlideCoolTimer.start()
-			if velocity.x >= -lowvelocity and velocity.x <= lowvelocity and is_on_floor() and !cantuncrouch:
+			if velocity.x >= -lowvelocity and velocity.x <= lowvelocity and is_on_floor() and !cantuncrouch and !$Slopebackward.is_colliding():
 				state = Ground
 				if Input.is_action_pressed(\"down\"):
 					state = Crouching
+			if cantuncrouch:
+				if velocity.x > 0 and velocity.x < 601:
+					velocity.x = lerp(velocity.x, 600.0, .2)
+				if velocity.x < 0 and velocity.x > -601:
+					velocity.x = lerp(velocity.x, -600.0, .2)
 		Crouching:
 			anim.play(\"crouch\")
 			Standingcshape.disabled = true
@@ -213,6 +262,8 @@ func _physics_process(delta):
 				beginslide()
 			if Input.is_action_just_pressed(\"left\") and !slidecooldown:
 				beginslide()
+			if !Input.is_action_pressed(\"down\") and !cantuncrouch:
+				state = Ground
 		Turning:
 			if turnstarted == false:
 				turnstarted = true
@@ -227,12 +278,16 @@ func _physics_process(delta):
 			velocity.y += 20
 			if is_on_floor():
 				state = Ground
+				if Input.is_action_pressed(\"down\"):
+					state = Crouching
 		Attack1:
 			if attacking == false:
-				$StartUpTimer.start()
-				$AttackTimer.start()
-				attacking = true
-				attackstartup = true
+				print(\"attackfalse\")
+				hitbox.monitoring = false
+				state = Ground
+				attackcooldown = true
+				$AttackCoolTimer.wait_time = .5
+				$AttackCoolTimer.start()
 			hitbox.monitoring = true
 			anim.play(\"attack\")
 			if attackstartup == false:
@@ -242,18 +297,16 @@ func _physics_process(delta):
 					velocity.x += attackvelocity2
 				else:
 					velocity.x -= attackvelocity2
+				if attack2 == false:
+					$StartUpTimer.wait_time = 0.3
+					$StartUpTimer.start()
+					$AttackTimer.wait_time = 0.6
+					$AttackTimer.start()
+					attack2 = true
+					attacking = true
+					attackstartup = true
 				state = Attack2
-		#deactivate attack
-			if attacking == false:
-				hitbox.monitoring = false
-				state = Ground
 		Attack2:
-			if attack2 == false:
-				$StartUpTimer.start()
-				$AttackTimer.start()
-				attack2 = true
-				attacking = true
-				attackstartup = true
 			hitbox.monitoring = true
 			anim.play(\"attack\")
 			if attackstartup == false:
@@ -264,21 +317,32 @@ func _physics_process(delta):
 				else:
 					velocity.x -= attackvelocity3
 				if state != Attack1:
+					if attack3 == false:
+						print(\"yesyes\")
+						$StartUpTimer.wait_time = 0.5
+						$StartUpTimer.start()
+						$AttackTimer.wait_time = 0.8
+						$AttackTimer.start()
+						attack3 = true
+						attacking = true
+						attackstartup = true
 					state = Attack3
 			if attacking == false:
 				hitbox.monitoring = false
+				attackcooldown = true
+				$AttackCoolTimer.wait_time = .6
+				$AttackCoolTimer.start()
 				state = Ground
 		Attack3:
 			if attacking == false:
-				$StartUpTimer.start()
-				$AttackTimer.start()
-				attack2 = true
-				attacking = true
-				attackstartup = true
+				hitbox.monitoring = false
+				attackcooldown = true
+				$AttackCoolTimer.wait_time = 1
+				$AttackCoolTimer.start()
+				state = Ground
 			hitbox.monitoring = true
 			anim.play(\"attack\")
-			if attackstartup == false and attacking == false:
-				print(\"falsey\")
+			if attackstartup == false:
 				hitbox.monitoring = false
 		AirAttack:
 			if airattacking == false and airattacks == true:
@@ -321,9 +385,6 @@ func _physics_process(delta):
 		timerstarted = false
 		gravity = ProjectSettings.get_setting(\"physics/2d/default_gravity\")
 
-
-
-
 #just disables crouch hitbox, dont touch
 	if state != Crouching and state != Sliding:
 		Crouchingcshape.disabled = true
@@ -346,9 +407,9 @@ func _physics_process(delta):
 		
 
 #Manages groundedstate
-	if is_on_floor() and !cantuncrouch and state != Sliding and attacking != true and velocity.x >= -lowvelocity and velocity.x <= lowvelocity and state != Turning and !Input.is_action_pressed(\"down\") and !Input.is_action_pressed(\"left\") and !Input.is_action_pressed(\"right\"):
+	if is_on_floor() and !cantuncrouch and state != Sliding and attacking == false and velocity.x >= -lowvelocity and velocity.x <= lowvelocity and state != Turning and !Input.is_action_pressed(\"down\") and !Input.is_action_pressed(\"left\") and !Input.is_action_pressed(\"right\"):
 		state = Ground
-	if velocity.y > 0 and !cantuncrouch and state != On_Wall and airattacking == false and !is_on_floor():
+	if velocity.y > 0 and !cantuncrouch and state != On_Wall and airattacking == false and !is_on_floor() and sliding == false and state != Sliding:
 		state = Falling
 
 #Manages floor refreshes
@@ -362,10 +423,12 @@ func _physics_process(delta):
 		justjumped = false
 		walljumpbegin = false
 		coyotestarted = false
+		if !$Slopechecker.is_colliding():
+			on_slope = true
 
 #handle walk state activation
 	if velocity.x < -lowvelocity and is_on_floor() or velocity.x > lowvelocity and is_on_floor():
-		if !Input.is_action_pressed(\"down\") and sliding == false and !cantuncrouch and (Input.is_action_pressed(\"left\") or Input.is_action_pressed(\"right\")) and attacking == false and state != Turning and !Input.is_action_pressed(\"attack\"):
+		if !Input.is_action_pressed(\"down\") and sliding == false and !cantuncrouch and (Input.is_action_pressed(\"left\") or Input.is_action_pressed(\"right\")) and attacking == false and state != Turning and !Input.is_action_pressed(\"attack\") and attackstartup == false:
 			state = Walking
 
 	#if Input.is_action_pressed(\"scan\") and state == States.Ground:
@@ -394,19 +457,19 @@ func _physics_process(delta):
 		#Crouchingcshape.disabled = true
 #Sliding code...
 	if state != Sliding:
-		SPEED = basespeed
+		floor_snap_length = 20
 		sliding = false
 
 
 #activate turn state
 	#if walking left
-	if velocity.x < -0 and is_on_floor() and attacking == false and state != Crouching  and !cantuncrouch:
+	if velocity.x < -0 and is_on_floor() and attacking == false and state != Crouching and !cantuncrouch and attackstartup == false:
 		if Input.is_action_pressed(\"right\"):
 			state = Turning
 		if Input.is_action_just_pressed(\"right\"):
 			state = Turning
 	#if walking right
-	if velocity.x > 0 and is_on_floor() and attacking == false and state != Crouching  and !cantuncrouch:
+	if velocity.x > 0 and is_on_floor() and attacking == false and state != Crouching  and !cantuncrouch and attackstartup == false:
 		if Input.is_action_pressed(\"left\"):
 			state = Turning
 		if Input.is_action_just_pressed(\"left\"):
@@ -457,6 +520,11 @@ func _on_turnstatetimer_timeout():
 
 func _on_slide_cool_timer_timeout():
 	slidecooldown = false
+
+
+func _on_attack_cool_timer_timeout():
+	attackcooldown = false
+	print(\"canattack\")
 "
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_g1m73"]
@@ -513,7 +581,7 @@ radius = 30.0
 height = 142.391
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j0dwg"]
-size = Vector2(31, 78.3333)
+size = Vector2(48, 78.3333)
 
 [sub_resource type="Animation" id="Animation_nf2le"]
 resource_name = "Idle"
@@ -757,7 +825,7 @@ wait_time = 0.5
 one_shot = true
 
 [node name="CoyoteTimer" type="Timer" parent="."]
-wait_time = 0.5
+wait_time = 0.3
 one_shot = true
 
 [node name="JumpBuffer" type="Timer" parent="."]
@@ -813,7 +881,7 @@ collision_mask = 16
 monitoring = false
 
 [node name="HitboxCol" type="CollisionShape2D" parent="HitArea"]
-position = Vector2(35.5, -2.83337)
+position = Vector2(27, -2.83337)
 shape = SubResource("RectangleShape2D_j0dwg")
 
 [node name="Sprites" type="Sprite2D" parent="."]
@@ -848,6 +916,18 @@ one_shot = true
 wait_time = 0.4
 one_shot = true
 
+[node name="AttackCoolTimer" type="Timer" parent="."]
+one_shot = true
+
+[node name="Slopechecker" type="RayCast2D" parent="."]
+target_position = Vector2(0, 45)
+
+[node name="Slopeforward" type="RayCast2D" parent="."]
+target_position = Vector2(11, 39)
+
+[node name="Slopebackward" type="RayCast2D" parent="."]
+target_position = Vector2(-11, 39)
+
 [connection signal="timeout" from="SlideTimer" to="." method="_on_slide_timer_timeout"]
 [connection signal="timeout" from="SlideCoolTimer" to="." method="_on_slide_cool_timer_timeout"]
 [connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]
@@ -859,3 +939,4 @@ one_shot = true
 [connection signal="body_entered" from="HitArea" to="." method="_on_hit_area_body_entered"]
 [connection signal="timeout" from="turnstatetimer" to="." method="_on_turnstatetimer_timeout"]
 [connection signal="timeout" from="StartUpTimer" to="." method="_on_start_up_timer_timeout"]
+[connection signal="timeout" from="AttackCoolTimer" to="." method="_on_attack_cool_timer_timeout"]

@@ -6,7 +6,7 @@ func _ready():
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
+func _process(_delta):
 	if Gamemanager.player.lookinleft == true:
 		position.x = lerp(position.x, 30.0, .2)
 	else:
