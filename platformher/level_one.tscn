@@ -229,7 +229,7 @@ position = Vector2(-450, -192)
 shape = SubResource("RectangleShape2D_vkqex")
 
 [node name="BasicEnemy4" parent="." instance=ExtResource("11_wjw23")]
-position = Vector2(473, 285)
+position = Vector2(1551, -254)
 scale = Vector2(1, 1)
 
 [node name="ScreenArea" type="Area2D" parent="."]
@@ -270,6 +270,7 @@ collision_mask = 2
 script = ExtResource("15_hi0sd")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ScreenArea3"]
+visible = false
 position = Vector2(320, 0)
 shape = SubResource("RectangleShape2D_r8ils")
 

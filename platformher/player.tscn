@@ -1,14 +1,13 @@
-[gd_scene load_steps=35 format=3 uid="uid://eb45g6exg3qh"]
+[gd_scene load_steps=31 format=3 uid="uid://eb45g6exg3qh"]
 
-[ext_resource type="Texture2D" uid="uid://djy8ppnshq75b" path="res://icon.svg" id="1_rc4rb"]
-[ext_resource type="Texture2D" uid="uid://bgmafcpbp4s74" path="res://placeholderanim.png" id="2_e40cc"]
+[ext_resource type="Texture2D" uid="uid://dik8vab50bgks" path="res://roguecrouch-Sheet.png" id="3_40ns3"]
 [ext_resource type="Texture2D" uid="uid://b0t1eyy7gvjg0" path="res://characteranim-Sheet.png" id="3_ikpvk"]
 [ext_resource type="Texture2D" uid="uid://dcc0pfrm5y8oq" path="res://roguejumpattack-Sheet.png" id="3_qsoob"]
 [ext_resource type="Texture2D" uid="uid://c7fniq8kvoaa" path="res://rogueidle-Sheet.png" id="4_cx8v2"]
 
 [sub_resource type="GDScript" id="GDScript_vsbh0"]
 script/source = "extends CharacterBody2D
-@onready var anim = $CharacterAnimator
+@onready var anim = $AnimPlayer
 var basespeed = 430.0
 var upslopespeed = 280.0
 var downslopespeed = 500
@@ -88,11 +87,11 @@ func _on_attack_timer_timeout():
 	attacking = false
 	attack2 = false
 	attack3 = false
-	hitbox.monitoring = false
+	#hitbox.monitoring = false
 func _on_air_attack_timer_timeout():
 	print(\"yosh\")
 	airattacking = false
-	hitbox.monitoring = false
+	#hitbox.monitoring = false
 func beginslide():
 	if !slidecooldown and state != Sliding and !slidecooldown and slideunlocked:
 		floor_snap_length = 30
@@ -201,12 +200,12 @@ func _physics_process(delta):
 	match state:
 		Jumping:
 			turnstarted = false
-			anim.play(\"jump\")
+			#anim.play(\"jump\")
 		Walljumping:
 			if walljumpbegin == true:
 				canwallcolcheck = false
 			$WallColCheckTimer.start()
-			anim.play(\"walljump\")
+			#anim.play(\"walljump\")
 			if is_on_wall():
 				if !Input.is_action_just_pressed(\"up\") and walljumpunlocked:
 					state = On_Wall
@@ -216,16 +215,17 @@ func _physics_process(delta):
 			if Input.is_action_pressed(\"down\"):
 				if velocity.x >= -lowvelocity and velocity.x <= lowvelocity and !cantuncrouch:
 					if is_on_floor() and slideunlocked:
+						anim.play(\"crouch\")
 						state = Crouching
 					else: 
 						velocity.y = lerp(velocity.y, basespeed, jumpresistance) 
 		Walking:
-			anim.play(\"walk\")
+			#anim.play(\"walk\")
 			if Input.is_action_just_pressed(\"down\") and !slidecooldown and (velocity.x  > lowvelocity or velocity.x  < -lowvelocity):
 				beginslide()
 		Sliding:
 			floor_snap_length = 30
-			anim.play(\"slide\")
+			#anim.play(\"slide\")
 			Standingcshape.disabled = true
 			Crouchingcshape.disabled = false
 			if velocity.y > 600 and !cantuncrouch:
@@ -273,6 +273,7 @@ func _physics_process(delta):
 			if velocity.x >= -lowvelocity and velocity.x <= lowvelocity and is_on_floor() and !cantuncrouch:
 					state = Ground
 					if Input.is_action_pressed(\"down\") and slideunlocked:
+						anim.play(\"crouch\")
 						state = Crouching
 			if !on_slope and cantuncrouch:
 				if velocity.x > 0 and velocity.x < 601:
@@ -280,7 +281,6 @@ func _physics_process(delta):
 				if velocity.x < 0 and velocity.x > -601:
 					velocity.x = lerp(velocity.x, -600.0, .6)
 		Crouching:
-			anim.play(\"crouch\")
 			Standingcshape.disabled = true
 			Crouchingcshape.disabled = false
 			if state == Walking and (velocity.x > 400 or velocity.x < -400) and !slidecooldown:
@@ -296,29 +296,30 @@ func _physics_process(delta):
 				turnstarted = true
 				$turnstatetimer.start()
 				#will replace with turn anim
-				anim.play(\"crouch\")
+				#anim.play(\"crouch\")
 		Falling:
 			if Input.is_action_just_pressed(\"attack\"):
 				if airattacks == true and !cantuncrouch and airattacking == false:
 						state = AirAttack
-			anim.play(\"fall\")
+			#anim.play(\"fall\")
 			velocity.y += 20
 			if is_on_floor():
 				state = Ground
 				if Input.is_action_pressed(\"down\") and slideunlocked:
+					anim.play(\"crouch\")
 					state = Crouching
 		Attack1:
 			if attacking == false:
 				print(\"attackfalse\")
-				hitbox.monitoring = false
+				#hitbox.monitoring = false
 				state = Ground
 				attackcooldown = true
 				$AttackCoolTimer.wait_time = .5
 				$AttackCoolTimer.start()
-			hitbox.monitoring = true
-			anim.play(\"attack\")
-			if attackstartup == false:
-				hitbox.monitoring = false
+			#hitbox.monitoring = true
+			#anim.play(\"attack\")
+			#if attackstartup == false:
+				#hitbox.monitoring = false
 			if Input.is_action_just_pressed(\"attack\") and attacking == true and attackstartup == false and is_on_floor():
 				if lookinleft == false:
 					velocity.x += attackvelocity2
@@ -334,10 +335,10 @@ func _physics_process(delta):
 					attackstartup = true
 				state = Attack2
 		Attack2:
-			hitbox.monitoring = true
-			anim.play(\"attack\")
-			if attackstartup == false:
-				hitbox.monitoring = false
+			#hitbox.monitoring = true
+			#anim.play(\"attack2\")
+			#if attackstartup == false:
+				#hitbox.monitoring = false
 			if Input.is_action_just_pressed(\"attack\") and attacking == true and attackstartup == false: #and attackstartup == false and is_on_floor():
 				if lookinleft == false:
 					velocity.x += attackvelocity3
@@ -355,34 +356,34 @@ func _physics_process(delta):
 						attackstartup = true
 					state = Attack3
 			if attacking == false:
-				hitbox.monitoring = false
+				#hitbox.monitoring = false
 				attackcooldown = true
 				$AttackCoolTimer.wait_time = .6
 				$AttackCoolTimer.start()
 				state = Ground
 		Attack3:
 			if attacking == false:
-				hitbox.monitoring = false
+				#hitbox.monitoring = false
 				attackcooldown = true
 				$AttackCoolTimer.wait_time = 1
 				$AttackCoolTimer.start()
 				state = Ground
-			hitbox.monitoring = true
-			anim.play(\"attack\")
-			if attackstartup == false:
-				hitbox.monitoring = false
+			#hitbox.monitoring = true
+			#anim.play(\"attack3\")
+			#if attackstartup == false:
+				#hitbox.monitoring = false
 		AirAttack:
 			if airattacking == false and airattacks == true:
 				airattacks = false
 				airattacking = true
 				velocity.y = 0
 				velocity.y -= airattackvelocity
-				anim.play(\"airattack\")
+				$AnimPlayer.play(\"airattack\")
 				$AirAttackTimer.start()
-			hitbox.monitoring = true
+			#hitbox.monitoring = true
 			if airattacking == false:
 				print(\"hello\")
-				hitbox.monitoring = false
+				#hitbox.monitoring = false
 				state = Falling
 		On_Wall:
 			airattacks = true
@@ -392,7 +393,7 @@ func _physics_process(delta):
 				state = Falling
 			if !is_on_wall() and !$Wallcheck.is_colliding() and !$Wallcheck2.is_colliding():
 				state = Falling
-			anim.play(\"onwall\")
+			#anim.play(\"onwall\")
 			if velocity.y > 0:
 				if Input.is_action_just_pressed(\"down\"):
 					wallslow = false
@@ -539,6 +540,18 @@ func _on_hit_area_body_entered(body):
 			body.knockback_velocity.y = -20
 			body.knockspeed = 300
 
+
+func _on_jump_hit_area_body_entered(body):
+	body.hit(damage)
+	if body.knockspeed:
+		if state == Attack1:
+			body.knockback_velocity.y = -10
+			body.knockspeed = 150
+		if state == Attack2:
+			body.knockback_velocity.y = -20
+			body.knockspeed = 300
+
+
 func _on_turnstatetimer_timeout():
 	turnstarted = false
 	if is_on_floor():
@@ -558,6 +571,7 @@ func _on_slide_cool_timer_timeout():
 func _on_attack_cool_timer_timeout():
 	attackcooldown = false
 	print(\"canattack\")
+
 "
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_g1m73"]
@@ -611,42 +625,154 @@ func _process(_delta):
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_pecl2"]
 radius = 30.0
-height = 142.391
+height = 153.045
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_j0dwg"]
 size = Vector2(48, 78.3333)
 
+[sub_resource type="Animation" id="Animation_cigba"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Animations:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [ExtResource("3_qsoob")]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Animations:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="Animation" id="Animation_wvav2"]
+resource_name = "airattack"
+length = 0.8
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Animations:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.4, 0.6, 0.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("JumpHitArea/CollisionShape2D:disabled")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [true, false, true]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Animations:texture")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [ExtResource("3_qsoob")]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("JumpHitArea:monitoring")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
 [sub_resource type="Animation" id="Animation_nf2le"]
-resource_name = "Idle"
+resource_name = "idle"
+length = 1.8
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Animations:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [ExtResource("4_cx8v2")]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Animations:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 5]
+}
+
+[sub_resource type="Animation" id="Animation_ynjgg"]
+resource_name = "crouch"
+length = 0.4
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Animations:texture")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [ExtResource("3_40ns3")]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Animations:frame")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4]
+}
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_xpt2j"]
 _data = {
-"Idle": SubResource("Animation_nf2le")
+"RESET": SubResource("Animation_cigba"),
+"airattack": SubResource("Animation_wvav2"),
+"crouch": SubResource("Animation_ynjgg"),
+"idle": SubResource("Animation_nf2le")
 }
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_qoiuv"]
-atlas = ExtResource("3_qsoob")
-region = Rect2(0, 0, 180, 180)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_ahyjn"]
-atlas = ExtResource("3_qsoob")
-region = Rect2(180, 0, 180, 180)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_txrr6"]
-atlas = ExtResource("3_qsoob")
-region = Rect2(360, 0, 180, 180)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_6m4ku"]
-atlas = ExtResource("3_qsoob")
-region = Rect2(540, 0, 180, 180)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_rncbu"]
-atlas = ExtResource("3_qsoob")
-region = Rect2(720, 0, 180, 180)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_metth"]
-atlas = ExtResource("3_qsoob")
-region = Rect2(900, 0, 180, 180)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_f6316"]
 atlas = ExtResource("3_ikpvk")
@@ -706,29 +832,6 @@ region = Rect2(1260, 0, 180, 180)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_ko7na"]
 animations = [{
-"frames": [{
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_qoiuv")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_ahyjn")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_txrr6")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_6m4ku")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_rncbu")
-}, {
-"duration": 1.0,
-"texture": SubResource("AtlasTexture_metth")
-}],
-"loop": false,
-"name": &"airattack",
-"speed": 9.0
-}, {
 "frames": [{
 "duration": 1.0,
 "texture": SubResource("AtlasTexture_f6316")
@@ -824,11 +927,6 @@ platform_floor_layers = 4294967265
 platform_wall_layers = 1
 script = SubResource("GDScript_vsbh0")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-visible = false
-scale = Vector2(0.476563, 0.654297)
-texture = ExtResource("1_rc4rb")
-
 [node name="PlayerCol" type="CollisionShape2D" parent="."]
 position = Vector2(0, -5)
 rotation = 3.14159
@@ -904,9 +1002,10 @@ collision_layer = 2
 collision_mask = 16
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="JumpHitArea"]
-position = Vector2(-7, 139)
-rotation = -1.06291
+position = Vector2(-37, 131)
+rotation = -1.39626
 shape = SubResource("CapsuleShape2D_pecl2")
+disabled = true
 
 [node name="HitArea" type="Area2D" parent="."]
 collision_layer = 2
@@ -917,21 +1016,17 @@ monitoring = false
 position = Vector2(27, -2.83337)
 shape = SubResource("RectangleShape2D_j0dwg")
 
-[node name="Sprites" type="Sprite2D" parent="."]
-visible = false
-position = Vector2(7, -16)
-texture = ExtResource("2_e40cc")
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+[node name="AnimPlayer" type="AnimationPlayer" parent="."]
 libraries = {
 "": SubResource("AnimationLibrary_xpt2j")
 }
 
 [node name="CharacterAnimator" type="AnimatedSprite2D" parent="."]
+visible = false
 texture_filter = 1
 position = Vector2(5, -2)
 sprite_frames = SubResource("SpriteFrames_ko7na")
-animation = &"airattack"
+animation = &"fall"
 
 [node name="Wallcheck" type="RayCast2D" parent="."]
 position = Vector2(0, -9)
@@ -961,6 +1056,10 @@ target_position = Vector2(11, 39)
 [node name="Slopebackward" type="RayCast2D" parent="."]
 target_position = Vector2(-11, 39)
 
+[node name="Animations" type="Sprite2D" parent="."]
+texture = ExtResource("3_qsoob")
+hframes = 6
+
 [connection signal="timeout" from="SlideTimer" to="." method="_on_slide_timer_timeout"]
 [connection signal="timeout" from="SlideCoolTimer" to="." method="_on_slide_cool_timer_timeout"]
 [connection signal="timeout" from="CoyoteTimer" to="." method="_on_coyote_timer_timeout"]
@@ -969,6 +1068,7 @@ target_position = Vector2(-11, 39)
 [connection signal="timeout" from="AttackTimer" to="." method="_on_attack_timer_timeout"]
 [connection signal="timeout" from="AirAttackTimer" to="." method="_on_air_attack_timer_timeout"]
 [connection signal="timeout" from="WallColCheckTimer" to="." method="_on_wall_col_check_timer_timeout"]
+[connection signal="body_entered" from="JumpHitArea" to="." method="_on_jump_hit_area_body_entered"]
 [connection signal="body_entered" from="HitArea" to="." method="_on_hit_area_body_entered"]
 [connection signal="timeout" from="turnstatetimer" to="." method="_on_turnstatetimer_timeout"]
 [connection signal="timeout" from="StartUpTimer" to="." method="_on_start_up_timer_timeout"]
