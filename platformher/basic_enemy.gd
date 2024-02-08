@@ -5,10 +5,12 @@ const SPEED = 300.0
 const JUMP_VELOCITY = -400.0
 var knockback_velocity: Vector2 = Vector2(100,-20)
 var knockspeed = 150
-enum States {Ground, Jumping, Falling, Walking, Hit, Dead}
+enum {Ground, Jumping, Falling, Walking, Hit, Dead}
+enum {Idle, Patrol, Chase}
 # Get the gravity from the project settings to be synced with RigidBody nodes.
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
-var state : int = States.Ground
+var state : int = Ground
+var behave : int = Idle
 var stun: bool = false
 
 func hit(damage : int):
@@ -16,7 +18,7 @@ func hit(damage : int):
 		knockback_velocity = Vector2(100,-50)
 	if Gamemanager.player.lookinleft == true:
 		knockback_velocity = Vector2(-100,-50)
-	state = States.Hit
+	state = Hit
 	health -= damage
 	stun = true
 	$StunTimer.start()
@@ -37,10 +39,11 @@ func _physics_process(delta):
 	# Add the gravity.
 	if not is_on_floor():
 		velocity.y += gravity * delta
-	if state == States.Hit:
-		velocity = knockback_velocity * delta * knockspeed
-		if stun == false:
-			state = States.Ground
+	match state:
+		Hit:
+			velocity = knockback_velocity * delta * knockspeed
+			if stun == false:
+				state = Ground
 
 
 

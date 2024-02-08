@@ -7,15 +7,11 @@ func _ready():
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta):
-	match parent.state:
-		parent.Ground:
-			text = ("grounded")
-		parent.Jumping:
-			text = ("jumping")
-		parent.Walking:
-			text = ("walking")
-		parent.Hit:
-			text = ("hit")
-		parent.Dead:
-			text = ("dead")
+func _process(delta):
+	match parent.behave:
+		parent.Idle:
+			text = ("idle")
+		parent.Patrol:
+			text = ("patrol")
+		parent.Chase:
+			text = ("chase")
