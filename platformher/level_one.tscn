@@ -230,7 +230,7 @@ position = Vector2(-450, -192)
 shape = SubResource("RectangleShape2D_vkqex")
 
 [node name="BasicEnemy4" parent="." instance=ExtResource("11_wjw23")]
-position = Vector2(3196, -60)
+position = Vector2(2838, -192)
 scale = Vector2(1, 1)
 
 [node name="ScreenArea" type="Area2D" parent="."]
@@ -336,7 +336,10 @@ offset_bottom = -70.0
 text = "slide"
 
 [node name="Missile" parent="." instance=ExtResource("19_oo3jj")]
-position = Vector2(2802, -115)
+position = Vector2(3058, -130)
+
+[node name="Missile2" parent="." instance=ExtResource("19_oo3jj")]
+position = Vector2(3847, -125)
 
 [connection signal="paused" from="Player" to="Player/Camera2D/CanvasLayer/ColorRect" method="_on_player_paused"]
 [connection signal="paused" from="Player" to="Player/Camera2D/CanvasLayer/Unpause Button" method="_on_player_paused"]
