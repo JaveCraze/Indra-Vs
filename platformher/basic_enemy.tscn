@@ -9,7 +9,7 @@
 size = Vector2(40.6667, 78.6667)
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_towdm"]
-radius = 19.3333
+radius = 10.6667
 height = 80.0
 
 [sub_resource type="GDScript" id="GDScript_h14k6"]
@@ -28,7 +28,7 @@ func _process(_delta):
 		return
 "
 
-[node name="BasicEnemy" type="CharacterBody2D"]
+[node name="BasicEnemy" type="CharacterBody2D" groups=["enemy"]]
 scale = Vector2(1.5, 1.5)
 collision_layer = 16
 script = ExtResource("1_ynv2b")

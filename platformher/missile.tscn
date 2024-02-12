@@ -9,7 +9,7 @@ height = 175.407
 
 [node name="Missile" type="Area2D" groups=["parryableprojectiles"]]
 collision_layer = 16
-collision_mask = 2
+collision_mask = 19
 script = ExtResource("1_42gpr")
 
 [node name="Sprite2D" type="Sprite2D" parent="." groups=["parryableprojectiles"]]
@@ -19,3 +19,5 @@ texture = ExtResource("1_d4y43")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." groups=["parryableprojectiles"]]
 scale = Vector2(0.421875, 0.121094)
 shape = SubResource("CapsuleShape2D_gmnls")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

@@ -11,7 +11,7 @@ func _process(_delta):
 	pass
 
 
-func _on_body_entered(body):
+func _on_body_entered(_body):
 	if Gamemanager.player.walljumpunlocked == false:
 		Gamemanager.player.walljumpunlocked = true
 		print("walljumpunlocked")

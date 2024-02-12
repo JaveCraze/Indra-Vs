@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://Can'tUncrouchChecker.gd" id="3_37ouv"]
 [ext_resource type="Script" path="res://ColorRect.gd" id="4_1kj7n"]
 [ext_resource type="Script" path="res://Unpause Button.gd" id="5_erk7i"]
+[ext_resource type="Script" path="res://ColorRect2.gd" id="6_aaek1"]
 [ext_resource type="Script" path="res://RichTextLabel.gd" id="6_ay580"]
 [ext_resource type="Script" path="res://Pause reminder.gd" id="7_wme3s"]
 [ext_resource type="Script" path="res://Direction.gd" id="8_d3d1n"]
@@ -13,8 +14,7 @@
 [ext_resource type="Script" path="res://is on wall.gd" id="10_4rqxc"]
 [ext_resource type="PackedScene" uid="uid://bf6pp0r5ndvy2" path="res://basic_enemy.tscn" id="11_wjw23"]
 [ext_resource type="Texture2D" uid="uid://4444is1kpiij" path="res://testtileset-export.png" id="12_wwc67"]
-[ext_resource type="Script" path="res://ScreenArea.gd" id="14_oj168"]
-[ext_resource type="Script" path="res://ScreenArea2.gd" id="15_hi0sd"]
+[ext_resource type="Script" path="res://ScreenAreaScript.gd" id="15_t8ti2"]
 [ext_resource type="Script" path="res://walljumpunlocker.gd" id="16_hsje3"]
 [ext_resource type="Texture2D" uid="uid://djy8ppnshq75b" path="res://icon.svg" id="17_gh6dc"]
 [ext_resource type="Script" path="res://slideunlocker.gd" id="18_gilnx"]
@@ -95,11 +95,12 @@ radius = 43.2897
 [node name="LevelOne" type="Node2D"]
 
 [node name="Player" parent="." instance=ExtResource("1_v5qwt")]
-position = Vector2(2693, -60)
+position = Vector2(1592, -46)
 floor_constant_speed = true
 floor_snap_length = 20.0
 
 [node name="Camera2D" type="Camera2D" parent="Player"]
+process_mode = 3
 position = Vector2(0, -69)
 limit_left = 0
 limit_top = 0
@@ -140,6 +141,16 @@ offset_right = 1431.0
 offset_bottom = 787.0
 color = Color(0.2, 0.2, 0.2, 1)
 script = ExtResource("4_1kj7n")
+
+[node name="transistionscreen" type="ColorRect" parent="Player/Camera2D/CanvasLayer"]
+process_mode = 3
+z_index = 4096
+offset_left = -423.0
+offset_top = -188.0
+offset_right = 1431.0
+offset_bottom = 787.0
+color = Color(0, 0, 0, 1)
+script = ExtResource("6_aaek1")
 
 [node name="Unpause Button" type="ColorRect" parent="Player/Camera2D/CanvasLayer"]
 visible = false
@@ -237,7 +248,7 @@ scale = Vector2(1, 1)
 position = Vector2(320, 180)
 collision_layer = 8
 collision_mask = 2
-script = ExtResource("14_oj168")
+script = ExtResource("15_t8ti2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ScreenArea"]
 shape = SubResource("RectangleShape2D_4juux")
@@ -252,7 +263,7 @@ position = Vector2(320, 180)
 position = Vector2(960, 180)
 collision_layer = 8
 collision_mask = 2
-script = ExtResource("15_hi0sd")
+script = ExtResource("15_t8ti2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ScreenArea2"]
 position = Vector2(0, -180)
@@ -269,7 +280,7 @@ visible = false
 position = Vector2(1600, -180)
 collision_layer = 8
 collision_mask = 2
-script = ExtResource("15_hi0sd")
+script = ExtResource("15_t8ti2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ScreenArea3"]
 position = Vector2(1029.5, 0)
@@ -285,7 +296,7 @@ position = Vector2(2380, 180)
 position = Vector2(2059, 255)
 collision_layer = 8
 collision_mask = 2
-script = ExtResource("15_hi0sd")
+script = ExtResource("15_t8ti2")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ScreenArea4"]
 position = Vector2(0, -55.5)
@@ -336,7 +347,7 @@ offset_bottom = -70.0
 text = "slide"
 
 [node name="Missile" parent="." instance=ExtResource("19_oo3jj")]
-position = Vector2(3058, -130)
+position = Vector2(3001, -72)
 
 [node name="Missile2" parent="." instance=ExtResource("19_oo3jj")]
 position = Vector2(3847, -125)
@@ -349,10 +360,5 @@ position = Vector2(3847, -125)
 [connection signal="unpaused" from="Player/Camera2D/CanvasLayer/Unpause Button" to="Player/Camera2D/CanvasLayer/PauseText" method="_on_unpause_button_unpaused"]
 [connection signal="pressed" from="Player/Camera2D/CanvasLayer/Unpause Button/Unpause" to="Player/Camera2D/CanvasLayer/Unpause Button" method="_on_unpause_pressed"]
 [connection signal="body_entered" from="Killzone" to="Player" method="_on_killzone_body_entered"]
-[connection signal="body_entered" from="ScreenArea" to="ScreenArea" method="_on_body_entered"]
-[connection signal="body_exited" from="ScreenArea" to="ScreenArea" method="_on_body_exited"]
-[connection signal="body_entered" from="ScreenArea2" to="ScreenArea2" method="_on_body_entered"]
-[connection signal="body_entered" from="ScreenArea3" to="ScreenArea3" method="_on_body_entered"]
-[connection signal="body_entered" from="ScreenArea4" to="ScreenArea4" method="_on_body_entered"]
 [connection signal="body_entered" from="walljumpunlocker" to="walljumpunlocker" method="_on_body_entered"]
 [connection signal="body_entered" from="slideunlocker" to="slideunlocker" method="_on_body_entered"]
