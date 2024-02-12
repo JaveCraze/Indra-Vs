@@ -1,0 +1,59 @@
+[gd_scene load_steps=4 format=3 uid="uid://yw3jfoq2kbo3"]
+
+[sub_resource type="Curve" id="Curve_fcouo"]
+max_value = 1024.0
+_data = [Vector2(0, 1024), 0.0, 0.0, 0, 0, Vector2(0.141304, 0), 0.0, 0.0, 0, 0, Vector2(1, 0), 43.7499, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="Animation" id="Animation_vcgbd"]
+resource_name = "spark"
+step = 0.05
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:emitting")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.35),
+"transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [true, false]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.3),
+"transitions": PackedFloat32Array(1, 2.54912),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_3a76f"]
+_data = {
+"spark": SubResource("Animation_vcgbd")
+}
+
+[node name="Sparks" type="CPUParticles2D"]
+position = Vector2(218, 77)
+amount = 80
+lifetime = 0.1
+speed_scale = 0.1
+emission_shape = 4
+emission_points = PackedVector2Array()
+emission_colors = PackedColorArray()
+spread = 42.2
+initial_velocity_min = 380.0
+initial_velocity_max = 998.95
+color = Color(1, 1, 0, 1)
+anim_speed_max = 68.0
+anim_speed_curve = SubResource("Curve_fcouo")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+"": SubResource("AnimationLibrary_3a76f")
+}

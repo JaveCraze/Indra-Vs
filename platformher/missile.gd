@@ -18,6 +18,8 @@ func _physics_process(_delta):
 
 func hit():
 	add_to_group("parried")
+	#$Sparks.emitting = true
+	#$Sparks.AnimationPlayer.play("spark")
 	if Gamemanager.player.lookinleft == false:
 		if move_x < 0:
 			move_x = -move_x

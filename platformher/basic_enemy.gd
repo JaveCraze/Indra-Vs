@@ -15,9 +15,14 @@ var stun: bool = false
 
 func hit(damage : int):
 	if Gamemanager.player.lookinleft == false:
-		knockback_velocity = Vector2(100,-50)
+		knockback_velocity = Vector2(1,-.5)
 	if Gamemanager.player.lookinleft == true:
-		knockback_velocity = Vector2(-100,-50)
+		knockback_velocity = Vector2(-1,-5)
+	match Gamemanager.player.state:
+		Gamemanager.player.Attack1:
+			pass
+		Gamemanager.player.AirAttack:
+			knockback_velocity = Vector2(0,-100)
 	state = Hit
 	health -= damage
 	stun = true
