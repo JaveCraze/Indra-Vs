@@ -115,6 +115,7 @@ script = ExtResource("2_7xhvt")
 [node name="CanvasLayer" type="CanvasLayer" parent="Player/Camera2D"]
 
 [node name="VelocityChecker" type="Label" parent="Player/Camera2D/CanvasLayer"]
+visible = false
 modulate = Color(1, 0, 0, 1)
 z_index = 5
 offset_left = 1.0
@@ -123,6 +124,7 @@ offset_bottom = 23.0
 script = ExtResource("2_n1w8w")
 
 [node name="Can\'tUncrouchChecker" type="Label" parent="Player/Camera2D/CanvasLayer"]
+visible = false
 modulate = Color(1, 0, 0, 1)
 z_index = 5
 offset_left = 2.0
@@ -193,6 +195,7 @@ text = "\"Esc\" to pause."
 script = ExtResource("7_wme3s")
 
 [node name="Direction" type="Label" parent="Player/Camera2D/CanvasLayer"]
+visible = false
 modulate = Color(1, 0, 0, 1)
 z_index = 5
 offset_left = 2.0
@@ -202,6 +205,7 @@ offset_bottom = 79.0
 script = ExtResource("8_d3d1n")
 
 [node name="is on wall" type="Label" parent="Player/Camera2D/CanvasLayer"]
+visible = false
 modulate = Color(1, 0, 0, 1)
 z_index = 5
 offset_left = 1.0

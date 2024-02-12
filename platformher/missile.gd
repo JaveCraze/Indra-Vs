@@ -5,6 +5,7 @@ extends Area2D
 var SPEED = 3
 var move_x = -1.0
 var move_y = 0
+var spark = preload("sparks.tscn")
 
 func _ready():
 	add_to_group("parryableprojectile")
@@ -18,7 +19,8 @@ func _physics_process(_delta):
 
 func hit():
 	add_to_group("parried")
-	#$Sparks.emitting = true
+	var Sparks = spark.instantiate()
+	self.add_child(Sparks)
 	#$Sparks.AnimationPlayer.play("spark")
 	if Gamemanager.player.lookinleft == false:
 		if move_x < 0:
